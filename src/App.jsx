@@ -59,7 +59,7 @@ function App() {
       case 'healthcare':
         return <HealthcareFinder onBack={() => setCurrentView('home')} />;
       case 'healthcheck':
-        return <HealthCheck user={user} onBack={() => setCurrentView('home')} />;
+        return <HealthCheck user={user} onBack={() => setCurrentView('home')} onFindHealthcare={() => setCurrentView('healthcare')} />;
       case 'dashboard':
         return <UserDashboard user={user} onBack={() => setCurrentView('home')} onLogout={handleLogout} />;
       case 'admin':

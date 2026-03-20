@@ -3,11 +3,37 @@ import {
   ArrowLeft, Activity, Brain, AlertCircle, CheckCircle, 
   ChevronRight, ChevronDown, RefreshCw, Info, Shield,
   Heart, Thermometer, Wind, Droplets, Eye, Ear, 
-  Headphones, Stethoscope, Bone, Armchair, PersonStanding
+  Headphones, Stethoscope, Bone, Armchair, PersonStanding,
+  MapPin, Phone, Star, Clock
 } from 'lucide-react';
 import { DiseasePredictionModel, symptomCategories, riskFactors, bodyParts } from '../data/diseasePrediction';
+import { healthcareProviders } from '../data/healthcareData';
 
 const model = new DiseasePredictionModel();
+
+// Mapping of diseases/conditions to medical specialties
+const diseaseToSpecialtyMap = {
+  'Hypertension': ['Cardiology', 'General Practitioner'],
+  'Diabetes': ['Endocrinology', 'General Practitioner'],
+  'Asthma': ['Respiratory/Pulmonology', 'General Practitioner'],
+  'COPD': ['Respiratory/Pulmonology', 'General Practitioner'],
+  'Heart Disease': ['Cardiology', 'General Practitioner'],
+  'Stroke': ['Neurology', 'Cardiology'],
+  'Migraine': ['Neurology', 'General Practitioner'],
+  'Tension Headache': ['Neurology', 'General Practitioner'],
+  'Depression': ['Psychiatry', 'General Practitioner'],
+  'Anxiety': ['Psychiatry', 'General Practitioner'],
+  'PTSD': ['Psychiatry', 'General Practitioner'],
+  'Arthritis': ['Orthopaedics', 'General Practitioner'],
+  'Back Pain': ['Orthopaedics', 'General Practitioner'],
+  'Acne': ['Dermatology', 'General Practitioner'],
+  'Eczema': ['Dermatology', 'General Practitioner'],
+  'Psoriasis': ['Dermatology', 'General Practitioner'],
+  'Gastritis': ['Gastroenterology', 'General Practitioner'],
+  'IBS': ['Gastroenterology', 'General Practitioner'],
+  'Cancer': ['Oncology', 'General Practitioner'],
+  'Thyroid Disease': ['Endocrinology', 'General Practitioner'],
+};
 
 const severityColors = {
   low: 'bg-green-100 text-green-700 border-green-300',
@@ -22,7 +48,7 @@ const riskLevelColors = {
   unknown: 'text-gray-500'
 };
 
-export default function HealthCheck({ user, onBack }) {
+export default function HealthCheck({ user, onBack, onFindHealthcare }) {
   const [step, setStep] = useState(1);
   const [selectedSymptoms, setSelectedSymptoms] = useState([]);
   const [selectedRiskFactors, setSelectedRiskFactors] = useState([]);
@@ -101,6 +127,33 @@ export default function HealthCheck({ user, onBack }) {
       general: Stethoscope
     };
     return iconMap[partId] || Activity;
+  };
+
+  // Get relevant healthcare providers based on predicted conditions
+  const getRelevantProviders = () => {
+    if (!prediction || prediction.predictions.length === 0) {
+      // If no specific predictions, return general practitioners
+      return healthcareProviders
+        .filter(provider => provider.specialty === 'General Practitioner')
+        .slice(0, 6)
+        .sort((a, b) => b.rating - a.rating);
+    }
+
+    const requiredSpecialties = new Set();
+    prediction.predictions.forEach(pred => {
+      const specialties = diseaseToSpecialtyMap[pred.disease] || ['General Practitioner'];
+      specialties.forEach(spec => requiredSpecialties.add(spec));
+    });
+
+    // Get providers matching required specialties
+    const relevantProviders = healthcareProviders.filter(provider =>
+      requiredSpecialties.has(provider.specialty) || provider.specialty === 'General Practitioner'
+    );
+
+    // Sort by rating and return top 6
+    return relevantProviders
+      .sort((a, b) => b.rating - a.rating)
+      .slice(0, 6);
   };
 
   return (
@@ -553,6 +606,64 @@ export default function HealthCheck({ user, onBack }) {
               </div>
             </div>
 
+            {/* Recommended Healthcare Providers */}
+            <div className="space-y-4">
+              <h3 className="font-semibold text-[#1f2937] flex items-center gap-2">
+                <MapPin className="w-5 h-5 text-[#1a6fc4]" />
+                Recommended Healthcare Providers
+              </h3>
+              <p className="text-sm text-gray-600">Based on your assessment results, here are suitable healthcare providers to consult:</p>
+              
+              <div className="grid md:grid-cols-2 gap-4">
+                {getRelevantProviders().map((provider) => (
+                  <div key={provider.id} className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 hover:shadow-md transition-all">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex-1">
+                        <h4 className="font-bold text-[#1f2937] text-sm">{provider.name}</h4>
+                        <p className="text-xs text-[#1a6fc4] font-medium mt-1">{provider.specialty}</p>
+                        <p className="text-xs text-gray-600 mt-0.5">{provider.practice}</p>
+                      </div>
+                      <div className="flex items-center gap-1 flex-shrink-0">
+                        <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                        <span className="text-sm font-semibold text-gray-700">{provider.rating}</span>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2 mb-3">
+                      <div className="flex items-center gap-2 text-xs text-gray-600">
+                        <MapPin className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                        <span className="line-clamp-1">{provider.address}, {provider.postcode}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs text-gray-600">
+                        <Phone className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                        <span>{provider.phone}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs text-gray-600">
+                        <Clock className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                        <span>{provider.hours}</span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+                      <div className="flex gap-2 flex-wrap">
+                        {provider.nhs && (
+                          <span className="px-2 py-1 bg-blue-50 text-blue-600 text-xs font-medium rounded">NHS</span>
+                        )}
+                        <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded">{provider.borough}</span>
+                      </div>
+                      <span className="text-xs text-gray-500">({provider.reviews} reviews)</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                <p className="text-sm text-blue-800">
+                  <span className="font-medium">💡 Tip:</span> You can also click "Find Healthcare Provider" to search for more options in your area with different filtering criteria.
+                </p>
+              </div>
+            </div>
+
             {/* Actions */}
             <div className="flex flex-wrap gap-4 justify-center">
               <button
@@ -563,7 +674,7 @@ export default function HealthCheck({ user, onBack }) {
                 Start New Assessment
               </button>
               <button
-                onClick={() => setCurrentView('healthcare')}
+                onClick={onFindHealthcare}
                 className="btn-primary flex items-center gap-2"
               >
                 <Heart className="w-5 h-5" />
@@ -576,3 +687,4 @@ export default function HealthCheck({ user, onBack }) {
     </div>
   );
 }
+ 
