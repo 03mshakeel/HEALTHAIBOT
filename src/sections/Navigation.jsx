@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Menu, X, User, LogOut, Heart, MessageCircle, MapPin, Home, Brain, Activity } from 'lucide-react';
 
-export default function Navigation({ user, onLogin, onRegister, onLogout, onNavigate }) {
+export default function Navigation({ user, onLogin, onRegister, onLogout, onNavigate, onProtectedNavigate }) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -38,9 +38,9 @@ export default function Navigation({ user, onLogin, onRegister, onLogout, onNavi
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 cursor-pointer" onClick={() => onNavigate('home')}>
             <div className="w-10 h-10 bg-gradient-to-br from-[#1a6fc4] to-[#114b83] rounded-lg flex items-center justify-center">
-              <Heart className="w-6 h-6 text-white" />
+              <img src="Logo maker project.png" alt="" />
             </div>
-            <span className="text-xl font-bold text-[#1f2937]">HealthBot</span>
+            <span className="text-xl font-bold text-[#1f2937]">MEDBOT</span>
           </div>
 
           <nav className="hidden md:flex items-center gap-8">
@@ -50,8 +50,11 @@ export default function Navigation({ user, onLogin, onRegister, onLogout, onNavi
                 onClick={() => {
                   if (link.href) {
                     scrollToSection(link.href);
-                  } else {
+                  } else if (link.view === 'home') {
                     onNavigate(link.view);
+                  } else {
+                    // Protected pages require login
+                    onProtectedNavigate(link.view);
                   }
                 }}
                 className="text-sm font-medium transition-colors duration-250 hover:text-[#1a6fc4] relative group text-[#1f2937]"
@@ -102,8 +105,11 @@ export default function Navigation({ user, onLogin, onRegister, onLogout, onNavi
                   onClick={() => {
                     if (link.href) {
                       scrollToSection(link.href);
-                    } else {
+                    } else if (link.view === 'home') {
                       onNavigate(link.view);
+                    } else {
+                      // Protected pages require login
+                      onProtectedNavigate(link.view);
                     }
                     setIsMobileMenuOpen(false);
                   }}

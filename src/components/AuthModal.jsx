@@ -15,7 +15,7 @@ export default function AuthModal({ mode, onClose, onSwitchMode, onLogin }) {
     setError('');
 
     if (mode === 'login') {
-      if (formData.email === 'admin@healthbot.london' && formData.password === 'admin123') {
+      if (formData.email === 'metbot@london.ac.uk' && formData.password === 'admin123') {
         onLogin({
           id: 'admin-1',
           name: 'Admin',
